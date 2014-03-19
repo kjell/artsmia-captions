@@ -12,6 +12,9 @@ var redis = require('redis')
   , client = redis.createClient()
   , express = require('express')
   , app = express()
+  , cors = require('cors')
+
+app.use(cors())
 
 app.get('/', function(req, res) {
   res.end('.')
