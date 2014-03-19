@@ -10,13 +10,24 @@ var search = function(query, callback) {
 
 var redis = require('redis')
   , client = redis.createClient()
+  , express = require('express')
+  , app = express()
 
-search('matisse', function(_, results) {
-  results.map(function(id) {
-    client.hget('object:'+~~(id/1000), id, function(err, reply) {
-      console.log(JSON.parse(reply))
-    })
-  })
-  client.quit()
+app.get('/', function(req, res) {
+  res.end('.')
 })
 
+app.get('/:query', function(req, res) {
+  var replies = []
+  search(req.params.query, function(_, results) {
+    results.map(function(id) {
+      client.hget('object:'+~~(id/1000), id, function(err, reply) {
+        replies.push(JSON.parse(reply))
+      })
+    })
+
+    setTimeout(function() { res.send(replies) }, 200)
+  })
+})
+
+app.listen(4680)
