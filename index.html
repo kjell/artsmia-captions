@@ -2,7 +2,14 @@
 <html>
 <body>
 
+<form id="controls" onsubmit="return false;">
 <input type="search" id="search" value="horse">
+<input type="radio" name="format" id="default" checked><label for="default">Default</label>
+<input type="radio" name="format" id="ad"><label for="ad">Ad</label>
+<input type="radio" name="format" id="catalog"><label for="catalog">Catalog</label>
+<input type="radio" name="format" id="label"><label for="label">Label</label>
+<textarea id="fields" value=""></textarea>
+</form>
 <hr>
 <ul id="captions"></ul>
 

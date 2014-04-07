@@ -1,6 +1,6 @@
 each object, index in objects
   figure
     img(src="//api.artsmia.org/images/#{object.id.split('/').pop()}/300/small.jpg")
-  figcaption
-    each field in ['country', 'culture', 'title', 'dated', 'medium', 'dimension', 'creditline', 'accession_number']
-     span #{object[field]}
+    figcaption
+      each field in fields
+        p(class=field) #{object[field]}

@@ -23,13 +23,12 @@ app.get('/', function(req, res) {
 app.get('/:query', function(req, res) {
   var replies = []
   search(req.params.query, function(_, results) {
-    results.map(function(id) {
+    results.map(function(id, index) {
       client.hget('object:'+~~(id/1000), id, function(err, reply) {
         replies.push(JSON.parse(reply))
+        if(index >= results.length-1) res.send(replies)
       })
     })
-
-    setTimeout(function() { res.send(replies) }, 200)
   })
 })
 
