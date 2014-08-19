@@ -4,3 +4,5 @@ each object, index in objects
     figcaption
       each field in fields
         p(class=field) #{object[field]}
+      aside
+        pre #{JSON.stringify(object, undefined, 2)}
