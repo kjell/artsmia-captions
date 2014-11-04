@@ -17,8 +17,8 @@ _search = function(query) {
     }
   })
 }
-search.addEventListener('keypress', function(event) { 
-  if(event.charCode == 13) _search(this.value)
+search.addEventListener('keypress', function(event) {
+  if(event.charCode == 13 || event.keyCode == 13) _search(this.value)
 })
 _search('horse')
 
@@ -31,7 +31,6 @@ var formats = {
 
 fieldsInput.value = fields
 var updateFields = function(fields) {
-  console.log('updating', fields)
   captions.innerHTML = template({objects: objects, fields: fields})
   fieldsInput.value = fields
 }
