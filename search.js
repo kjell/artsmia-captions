@@ -23,6 +23,8 @@ app.get('/', function(req, res) {
 app.get('/:query', function(req, res) {
   var replies = []
   search(req.params.query, function(_, results) {
+    if(results.length == 0) return res.send([], 404)
+
     results.map(function(id, index) {
       client.hget('object:'+~~(id/1000), id, function(err, reply) {
         replies.push(JSON.parse(reply))

@@ -6,3 +6,6 @@ each object, index in objects
         p(class=field) #{object[field]}
       aside
         pre #{JSON.stringify(object, undefined, 2)}
+
+if objects.length < 1
+  p Nothing matches
