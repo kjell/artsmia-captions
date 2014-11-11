@@ -1,6 +1,7 @@
 each object, index in objects
   figure
-    img(src="//api.artsmia.org/images/#{object.id.split('/').pop()}/300/small.jpg")
+    if object.image == "valid"
+      img(src="//api.artsmia.org/images/#{object.id.split('/').pop()}/300/small.jpg")
     figcaption
       each field in fields
         p(class=field) #{object[field]}
