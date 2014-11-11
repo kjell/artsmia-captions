@@ -15,6 +15,7 @@ _search = function(query) {
     if(document.querySelector('input:checked')) {
       updateFields(formats[document.querySelector('input:checked').id][0].split(','))
     }
+    document.title = '"'+query+'" | '+objects.length+' results'
   })
 }
 search.addEventListener('keypress', function(event) {
