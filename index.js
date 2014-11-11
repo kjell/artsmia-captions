@@ -8,7 +8,7 @@ var search = document.querySelector('#search')
   , objects = []
 
 _search = function(query) {
-  request('http://localhost:4680/'+query, function(err, res) {
+  request('http://caption-search.dx.artsmia.org/'+query, function(err, res) {
     objects = JSON.parse(res.body)
     console.log(objects)
     captions.innerHTML = template({objects: objects, fields: fields})
