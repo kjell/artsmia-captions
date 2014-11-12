@@ -16,12 +16,14 @@ _search = function(query) {
       updateFields(formats[document.querySelector('input:checked').id][0].split(','))
     }
     document.title = '"'+query+'" | '+objects.length+' results'
+    window.history.pushState({}, null, '?q='+query)
   })
 }
 search.addEventListener('keypress', function(event) {
   if(event.charCode == 13 || event.keyCode == 13) _search(this.value)
 })
-_search('horse')
+var q = search.value = window.location.search.replace('?q=', '') || 'horse'
+_search(q)
 
 var formats = {
   default: [fields.join(','), "\n"],
