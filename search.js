@@ -2,7 +2,7 @@ var l = require('limestone').SphinxClient()
 
 var search = function(query, callback) {
   l.connect('localhost:9312', function(error) {
-    l.query({query: query}, function(err, answer) {
+    l.query({query: query, limit: 50}, function(err, answer) {
       callback(null, answer.matches.map(function(match) { return match.doc }))
     })
   })
