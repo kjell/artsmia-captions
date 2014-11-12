@@ -1,4 +1,5 @@
 var request = require('browser-request')
+var qs = require('querystring')
 
 var search = document.querySelector('#search')
   , captions = document.querySelector('#captions')
@@ -22,7 +23,8 @@ _search = function(query) {
 search.addEventListener('keypress', function(event) {
   if(event.charCode == 13 || event.keyCode == 13) _search(this.value)
 })
-var q = search.value = window.location.search.replace('?q=', '') || 'horse'
+var params = qs.parse(window.location.search.replace('?', ''))
+  , q = search.value = params.q || 'horse'
 _search(q)
 
 var formats = {
