@@ -1,9 +1,22 @@
 var l = require('limestone').SphinxClient()
+var es = new require('elasticsearch').Client({
+  host: process.env.ES_URL,
+  log: 'trace'
+})
 
 var search = function(query, callback) {
-  l.connect('localhost:9312', function(error) {
-    l.query({query: query, limit: 50}, function(err, answer) {
-      callback(null, answer.matches.map(function(match) { return match.doc }))
+  var q = {
+    fuzzy_like_this: {
+      fields: ['artist', 'title'],
+      like_text: query
+    }
+  }
+
+  es.search({body: {query: q}, size: 100}).then(function (body) {
+    l.connect('localhost:9312', function(error) {
+      l.query({query: query, limit: 50}, function(err, answer) {
+        callback(null, answer.matches.map(function(match) { return match.doc }), body)
+      })
     })
   })
 }
@@ -22,13 +35,13 @@ app.get('/', function(req, res) {
 
 app.get('/:query', function(req, res) {
   var replies = []
-  search(req.params.query, function(_, results) {
-    if(results.length == 0) return res.send([], 404)
+  search(req.params.query, function(_, results, es) {
+    if(results.length == 0) return res.send({sphinx: [], es: es}, 404)
 
     results.map(function(id, index) {
       client.hget('object:'+~~(id/1000), id, function(err, reply) {
         replies.push(JSON.parse(reply))
-        if(index >= results.length-1) res.send(replies)
+        if(index >= results.length-1) res.send({sphinx: replies, es: es})
       })
     })
   })
