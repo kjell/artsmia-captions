@@ -1,7 +1,8 @@
 each object, index in objects
   figure
     if object.image == "valid"
-      img(src="//api.artsmia.org/images/#{object.id.split('/').pop()}/300/small.jpg")
+      a(href="//artsmia.github.io/ag-sketches/#/edit/#{object.id.split('/').pop()}")
+        img(src="//api.artsmia.org/images/#{object.id.split('/').pop()}/300/small.jpg")
     figcaption
       each field in fields
         p(class=field) #{object[field]}
