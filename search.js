@@ -12,12 +12,16 @@ var search = function(query, callback) {
     }
   }
 
-  es.search({body: {query: q}, size: 100}).then(function (body) {
-    l.connect('localhost:9312', function(error) {
-      l.query({query: query, limit: 50}, function(err, answer) {
-        callback(null, answer.matches.map(function(match) { return match.doc }), body)
-      })
-    })
+  console.log(JSON.stringify(q))
+
+  es.search({body: {query: q, aggs: aggs, highlight: highlight}, size: 100}).then(function (body) {
+    // l.connect('localhost:9312', function(error) {
+    //   l.query({query: query, limit: 50}, function(err, answer) {
+    //    callback(null, answer.matches.map(function(match) { return match.doc }), body)
+    //   })
+    // })
+    body.query = q
+    callback(null, [], body)
   })
 }
 
