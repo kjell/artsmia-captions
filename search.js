@@ -1,20 +1,82 @@
 var l = require('limestone').SphinxClient()
 var es = new require('elasticsearch').Client({
-  host: process.env.ES_URL,
-  log: 'trace'
+  host: process.env.ES_URL+'/test/',
+  log: false
 })
 
-var search = function(query, callback) {
-  var q = {
-    fuzzy_like_this: {
-      fields: ['artist', 'title'],
-      like_text: query
+var search = function(query, size, callback) {
+
+var fields = ["artist.*^9", "title^5", "description^3", "text^2", "description^2", "_all"]
+var searches = {
+flt: {
+  fields: fields,
+  like_text: query,
+},
+multi_match: {
+  query: query,
+  fields: fields,
+  type: "best_fields",
+  tie_breaker: 0.3,
+},
+common: {
+  _all: {
+    query: query,
+    cutoff_frequency: 0.01,
+    minimum_should_match: { low_freq: 1, high_freq: 3 }
+  },
+},
+sqs: {
+  query: query,
+  fields: fields,
+  tie_breaker: 0.3,
+  default_operator: "and",
+  // default_operator: "or",
+  // minimum_should_match: "3<80%",
+},
+}
+var function_score_sqs = {
+  query: {query_string: searches.sqs}, // good
+  //query: {flt: searches.flt}, // not great
+  //query: {multi_match: searches.multi_match}, // good
+  //query: {common: searches.common}, // ok, v different from sqs and multi
+  functions: [
+    {filter: {term: {image: "valid"}}, weight: 2},
+    {filter: {prefix: {room: "g"}}, weight: 1.1},
+  ],
+  score_mode: "sum"
+}
+
+  var q = {function_score: function_score_sqs}
+  var suggest = {
+    text: query,
+    byTitle: {term: {field: "title"}},
+    byArtist: {term: {field: "artist"}},
+    testphrase: {
+      phrase: {field: 'artist'}
     }
   }
+  var aggSize = 200
+  var aggs = {
+        // "Image": {"terms": {"script": "doc['image'].value == 'valid' ? 'yes' : 'no'", "size": aggSize}},
+        "Image": {"terms": {"field": "image", "size": aggSize}},
+	"On View": {"terms": {"script": "doc['room'].value == 'Not on View' ? 'Not on View' : 'On View'", size: aggSize}},
+        "Room": {"terms": {"field": "room.raw", "size": aggSize}},
+        "Artist": {"terms": {"field": "artist.raw", "size": aggSize}},
+        "Country": {"terms": {"field": "country.raw", "size": aggSize}},
+        "Style": {"terms": {"field": "style.raw", "size": aggSize}},
+        "Medium": {"terms": {"field": "medium", "size": aggSize}},
+        "Title": {"terms": {"field": "title.raw", "size": aggSize}},
+	"Gist": {"significant_terms": {"field": "_all"}},
+	// other facets? department
+	// "year": {"histogram": {"field": "dated", "interval": 50}},
+	// "year": {"terms": {"field": "dated", "size": aggSize}},
+      }
+  var highlight = {fields: {artist: {}, title: {}}}
 
   console.log(JSON.stringify(q))
 
-  es.search({body: {query: q, aggs: aggs, highlight: highlight}, size: 100}).then(function (body) {
+  if(q == '') return callback(null, [], body)
+  es.search({body: {query: q, aggs: aggs, highlight: highlight}, size: size}).then(function (body) {
     // l.connect('localhost:9312', function(error) {
     //   l.query({query: query, limit: 50}, function(err, answer) {
     //    callback(null, answer.matches.map(function(match) { return match.doc }), body)
@@ -22,6 +84,9 @@ var search = function(query, callback) {
     // })
     body.query = q
     callback(null, [], body)
+  }, function (error) {
+console.log(error)
+callback(error, [], [])
   })
 }
 
@@ -38,14 +103,16 @@ app.get('/', function(req, res) {
 })
 
 app.get('/:query', function(req, res) {
+  if(req.params.query == 'favicon.ico') return res.send(404)
   var replies = []
-  search(req.params.query, function(_, results, es) {
-    if(results.length == 0) return res.send({sphinx: [], es: es}, 404)
+  var size = req.query.size || 100
+  search(req.params.query, size, function(error, results, es) {
+    if(results.length == 0) return res.send({sphinx: [], es: es, query: req.params.query, error: error}, 404)
 
     results.map(function(id, index) {
       client.hget('object:'+~~(id/1000), id, function(err, reply) {
         replies.push(JSON.parse(reply))
-        if(index >= results.length-1) res.send({sphinx: replies, es: es})
+        if(index >= results.length-1) res.send({sphinx: replies, es: es, query: req.params.query})
       })
     })
   })
