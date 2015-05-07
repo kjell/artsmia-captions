@@ -51,29 +51,44 @@ var function_score_sqs = {
   var q = {function_score: function_score_sqs}
   var suggest = {
     text: query,
-    byTitle: {term: {field: "title"}},
-    byArtist: {term: {field: "artist"}},
-    testphrase: {
-      phrase: {field: 'artist'}
-    }
+    byArtist: {term: {field: "artist.raw"}}
   }
   var aggSize = 200
   var aggs = {
-        // "Image": {"terms": {"script": "doc['image'].value == 'valid' ? 'yes' : 'no'", "size": aggSize}},
-        "Image": {"terms": {"field": "image", "size": aggSize}},
-	"On View": {"terms": {"script": "doc['room'].value == 'Not on View' ? 'Not on View' : 'On View'", size: aggSize}},
-        "Room": {"terms": {"field": "room.raw", "size": aggSize}},
-        "Artist": {"terms": {"field": "artist.raw", "size": aggSize}},
-        "Country": {"terms": {"field": "country.raw", "size": aggSize}},
-        "Style": {"terms": {"field": "style.raw", "size": aggSize}},
-        "Medium": {"terms": {"field": "medium", "size": aggSize}},
-        "Title": {"terms": {"field": "title.raw", "size": aggSize}},
-	"Gist": {"significant_terms": {"field": "_all"}},
-	// other facets? department
-	// "year": {"histogram": {"field": "dated", "interval": 50}},
-	// "year": {"terms": {"field": "dated", "size": aggSize}},
-      }
-  var highlight = {fields: {artist: {}, title: {}}}
+    // "Image": {"terms": {"script": "doc['image'].value == 'valid' ? 'yes' : 'no'", "size": aggSize}},
+    "Image": {"terms": {"field": "image", "size": aggSize}},
+    // "Image": {
+    // 	"terms": {
+    // 		"field": "image", 
+    // 		"size": aggSize
+    // 	},
+    // 	"aggs": {
+    // 		"image_rights_type": {"terms": {"field": "image_rights_type"}},
+    // 	}
+    // },
+    "On View": {"terms": {"script": "doc['room.raw'].value == 'Not on View' ? 'Not on View' : 'On View'", size: aggSize}},
+    // "On View": {
+    //   "terms": {
+    //     "script": "doc['room.raw'].value == 'Not on View' ? 'Not on View' : 'On View'",
+    //     size: aggSize
+    //   },
+    //   "aggs": {"Room": {"terms": {"field": "room.raw", "size": aggSize}}},
+    // },
+    "Room": {"terms": {"field": "room.raw", "size": aggSize}},
+    "Image_rights_type": {"terms": {"field": "image_rights_type"}},
+    "Artist": {"terms": {"field": "artist.raw", "size": aggSize}},
+    "Country": {"terms": {"field": "country.raw", "size": aggSize}},
+    "Style": {"terms": {"field": "style.raw", "size": aggSize}},
+    "Medium": {"terms": {"field": "medium", "size": aggSize}},
+    "Title": {"terms": {"field": "title.raw", "size": aggSize}},
+    "Gist": {"significant_terms": {"field": "_all"}},
+    // "image_rights_type": {"terms": {"field": "image_rights_type"}},
+    // other facets? department
+    // "year": {"histogram": {"field": "dated", "interval": 50}},
+    // "year": {"terms": {"field": "dated", "size": aggSize}},
+    // "Creditline": {"terms": {"field": "creditline.raw", "size": aggSize}},
+  }
+  var highlight = {fields: {"*": {fragment_size: 500, number_of_fragments: 5}}}
 
   var search = {body: {query: q, aggs: aggs, highlight: highlight, suggest: suggest}, size: size}
   // when the search is undefined or blank, do a count over the aggregations
