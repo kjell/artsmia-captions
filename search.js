@@ -140,6 +140,7 @@ app.get('/:query', function(req, res) {
 
 app.get('/id/:id', function(req, res) {
   var id = req.params.id
+  if(id == 'G320') return res.json(prindleRoom)
   client.hget('object:'+~~(id/1000), id, function(err, reply) {
     res.json(JSON.parse(reply))
   })
@@ -165,4 +166,21 @@ app.get('/ids/:ids', function(req, res) {
   })
 })
 
+// var http = require('http')
+// app.get('/artists.json', function(req, res) {
+//   http.get(process.env.ES_URL+'/test/_search?search_type=count&pretty=true'node -d '{"aggs": {"artist": {"terms": {"field": "artist.raw", "size": 25000, "order": { "_term": "asc" }}}}}'
+// 
+
 app.listen(4680)
+
+var prindleRoom = {
+  accession_number: "82.43.1-60",
+  artist: "John Scott Bradstreet",
+  creditline: "Gift of funds from Wheaton Wood, by exchange",
+  culture: "American",
+  country: "United States",
+  dated: "1906",
+  life_date: "American, 1865-1914",
+  title: 'Duluth Living Room (from the William and Mina Prindle House',
+  room: "G320",
+}
