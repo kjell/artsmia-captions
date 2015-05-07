@@ -166,6 +166,29 @@ app.get('/ids/:ids', function(req, res) {
   })
 })
 
+app.get('/tag/:tag', function(req, res) {
+  client.smembers('tag:'+req.params.tag, function(err, ids) {
+    console.info('tag', req.params, ids.length)
+
+    var m = client.multi()
+    ids.forEach(function(id) { m.hget('object:'+~~(id/1000), id) })
+
+    m.exec(function(err, replies) {
+      var filter = req.query.filter
+      if(filter == undefined) return res.json(replies.map(function(meta) { return JSON.parse(meta) }))
+      filter = filter.split(',')
+      var filtered = replies.map(function(meta) {
+        if(meta == null) return
+        var json = JSON.parse(meta)
+        return filter.reduce(function(all, field) { 
+          all[field] = json[field]; return all
+        }, {})
+      })
+      return res.send(filtered)
+    })
+  })
+})
+
 // var http = require('http')
 // app.get('/artists.json', function(req, res) {
 //   http.get(process.env.ES_URL+'/test/_search?search_type=count&pretty=true'node -d '{"aggs": {"artist": {"terms": {"field": "artist.raw", "size": 25000, "order": { "_term": "asc" }}}}}'
