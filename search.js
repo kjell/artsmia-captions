@@ -4,9 +4,10 @@ var es = new require('elasticsearch').Client({
   log: false
 })
 
-var search = function(query, size, callback) {
+var search = function(query, size, filters, callback) {
 
-var fields = ["artist.*^9", "title^5", "description^3", "text^2", "description^2", "_all"]
+var fields = ["artist.artist^15", "artist.folded^15", "title^11", "description^3", "text^2", "accession_number", "_all", "artist.ngram^2", "title.ngram"]
+if(filters) query += ' '+filters
 var searches = {
 flt: {
   fields: fields,
@@ -31,7 +32,8 @@ sqs: {
   tie_breaker: 0.3,
   default_operator: "and",
   // default_operator: "or",
-  // minimum_should_match: "3<80%",
+  minimum_should_match: "2<60%",
+  // "fuzzy_prefix_length" : 3,
 },
 }
 var function_score_sqs = {
@@ -73,10 +75,12 @@ var function_score_sqs = {
       }
   var highlight = {fields: {artist: {}, title: {}}}
 
-  console.log(JSON.stringify(q))
-
-  if(q == '') return callback(null, [], body)
-  es.search({body: {query: q, aggs: aggs, highlight: highlight}, size: size}).then(function (body) {
+  var search = {body: {query: q, aggs: aggs, highlight: highlight, suggest: suggest}, size: size}
+  // when the search is undefined or blank, do a count over the aggregations
+  if(query == '' || query == undefined) {
+    search = {body: {size: 0, aggs: aggs}, searchType: 'count'}
+  }
+  es.search(search).then(function (body) {
     // l.connect('localhost:9312', function(error) {
     //   l.query({query: query, limit: 50}, function(err, answer) {
     //    callback(null, answer.matches.map(function(match) { return match.doc }), body)
@@ -85,8 +89,8 @@ var function_score_sqs = {
     body.query = q
     callback(null, [], body)
   }, function (error) {
-console.log(error)
-callback(error, [], [])
+    console.log(error)
+    callback(error, [], [])
   })
 }
 
@@ -106,8 +110,9 @@ app.get('/:query', function(req, res) {
   if(req.params.query == 'favicon.ico') return res.send(404)
   var replies = []
   var size = req.query.size || 100
-  search(req.params.query, size, function(error, results, es) {
-    if(results.length == 0) return res.send({sphinx: [], es: es, query: req.params.query, error: error}, 404)
+  var filters = req.query.filters
+  search(req.params.query || '', size, filters, function(error, results, es) {
+    if(results.length == 0) return res.send({sphinx: [], es: es, query: req.params.query, error: error, filters: filters}, 200)
 
     results.map(function(id, index) {
       client.hget('object:'+~~(id/1000), id, function(err, reply) {
