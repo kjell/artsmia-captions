@@ -10,15 +10,12 @@ var search = document.querySelector('#search')
 
 _search = function(query) {
   request('http://localhost:4680/'+query, function(err, res) {
-    results = JSON.parse(res.body)
-    objects = results.sphinx
-    es = results.es
-    esObjects = Array.prototype.map.call(es.hits.hits, function(hit) {
+    var results = JSON.parse(res.body)
+    objects = Array.prototype.map.call(results.hits.hits, function(hit) {
       return hit._source
     })
-    objects = esObjects
 
-    captions.innerHTML = template({objects: esObjects, fields: fields})
+    captions.innerHTML = template({objects: objects, fields: fields})
     if(document.querySelector('input:checked')) {
       updateFields(formats[document.querySelector('input:checked').id][0].split(','))
     }
